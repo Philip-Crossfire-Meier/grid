@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  react-native-app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"   # Metro bundler
+      - "19000:19000" # Expo CLI
+      - "19001:19001" # Expo CLI
+      - "19002:19002" # Expo CLI
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
+      - FORMULA_API_URL=http://formula-api:8000
+      - NODE_ENV=development
+    stdin_open: true
+    tty: true
+    networks:
+      - react-native-network
+    depends_on:
+      formula-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  formula-api:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=production
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - react-native-network
+    restart: unless-stopped
+
+networks:
+  react-native-network:
+    driver: bridge

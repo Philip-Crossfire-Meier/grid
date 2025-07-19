@@ -1,0 +1,210 @@
+"""
+REST API server for the Formula Engine.
+Provides endpoints for evaluating spreadsheet formulas.
+"""
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import logging
+import time
+from formula_engine import FormulaEngine
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app)  # Enable CORS for React Native frontend
+
+# Initialize formula engine
+formula_engine = FormulaEngine()
+
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'message': 'Formula Engine API is running',
+        'timestamp': time.time()
+    })
+
+
+@app.route('/api/evaluate-formulas', methods=['POST'])
+def evaluate_formulas():
+    """
+    Evaluate formulas in spreadsheet data.
+    
+    Expected JSON payload:
+    {
+        "data": [
+            {"id": 1, "col_a": "10", "col_b": "20", "col_c": "=A1+B1"},
+            {"id": 2, "col_a": "15", "col_b": "25", "col_c": "=SUM(A1:A2)"}
+        ],
+        "columns": [
+            {"key": "id", "title": "ID", "width": 60, "editable": false},
+            {"key": "col_a", "title": "A", "width": 140, "editable": true},
+            {"key": "col_b", "title": "B", "width": 60, "editable": true},
+            {"key": "col_c", "title": "C", "width": 180, "editable": true}
+        ]
+    }
+    """
+    try:
+        # Validate request
+        if not request.is_json:
+            return jsonify({
+                'success': False,
+                'error': 'Content-Type must be application/json'
+            }), 400
+        
+        payload = request.get_json()
+        
+        # Validate required fields
+        if 'data' not in payload or 'columns' not in payload:
+            return jsonify({
+                'success': False,
+                'error': 'Missing required fields: data and columns'
+            }), 400
+        
+        data = payload['data']
+        columns = payload['columns']
+        
+        # Validate data types
+        if not isinstance(data, list) or not isinstance(columns, list):
+            return jsonify({
+                'success': False,
+                'error': 'Data and columns must be arrays'
+            }), 400
+        
+        logger.info(f"Processing formula evaluation for {len(data)} rows and {len(columns)} columns")
+        
+        # Add processing delay to simulate real backend work
+        time.sleep(0.5)  # Reduced from 1 second for better UX
+        
+        # Evaluate formulas
+        result = formula_engine.evaluate_formulas(data, columns)
+        
+        # Add timing information
+        result['timestamp'] = time.time()
+        result['processed_rows'] = len(data)
+        result['processed_columns'] = len(columns)
+        
+        logger.info(f"Formula evaluation completed: {result['success']}")
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Error in evaluate_formulas endpoint: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'Internal server error during formula evaluation'
+        }), 500
+
+
+@app.route('/api/validate-formula', methods=['POST'])
+def validate_formula():
+    """
+    Validate a single formula without evaluating it.
+    
+    Expected JSON payload:
+    {
+        "formula": "=SUM(A1:A5)",
+        "context": {
+            "data": [...],
+            "columns": [...]
+        }
+    }
+    """
+    try:
+        if not request.is_json:
+            return jsonify({
+                'success': False,
+                'error': 'Content-Type must be application/json'
+            }), 400
+        
+        payload = request.get_json()
+        formula = payload.get('formula', '')
+        
+        if not formula.startswith('='):
+            return jsonify({
+                'valid': False,
+                'error': 'Formula must start with ='
+            })
+        
+        # Basic syntax validation
+        try:
+            # Try to evaluate with dummy context
+            dummy_data = [{'col_a': '1', 'col_b': '2'}]
+            dummy_columns = [
+                {'key': 'col_a', 'title': 'A'},
+                {'key': 'col_b', 'title': 'B'}
+            ]
+            
+            result = formula_engine._evaluate_formula(formula, 0, 'col_a', dummy_data, dummy_columns)
+            
+            return jsonify({
+                'valid': not isinstance(result, str) or not result.startswith('#'),
+                'message': 'Formula syntax is valid' if not isinstance(result, str) or not result.startswith('#') else 'Formula has syntax errors'
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'valid': False,
+                'error': f'Syntax error: {str(e)}'
+            })
+            
+    except Exception as e:
+        logger.error(f"Error in validate_formula endpoint: {str(e)}")
+        return jsonify({
+            'valid': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/supported-functions', methods=['GET'])
+def get_supported_functions():
+    """Get list of supported formula functions"""
+    return jsonify({
+        'functions': [
+            {
+                'name': 'SUM',
+                'description': 'Calculate sum of a range',
+                'syntax': 'SUM(A1:A5)',
+                'example': '=SUM(A1:A10)'
+            },
+            {
+                'name': 'AVERAGE',
+                'description': 'Calculate average of a range',
+                'syntax': 'AVERAGE(A1:A5)',
+                'example': '=AVERAGE(B1:B10)'
+            },
+            {
+                'name': 'Cell References',
+                'description': 'Reference individual cells',
+                'syntax': 'A1, B2, C3',
+                'example': '=A1+B1'
+            },
+            {
+                'name': 'Arithmetic',
+                'description': 'Basic arithmetic operations',
+                'syntax': '+, -, *, /',
+                'example': '=A1*2+B1'
+            }
+        ],
+        'operators': ['+', '-', '*', '/'],
+        'cell_reference_format': 'Excel-style (A1, B2, C3, etc.)'
+    })
+
+
+if __name__ == '__main__':
+    logger.info("Starting Formula Engine API server...")
+    app.run(
+        host='0.0.0.0',
+        port=8000,
+        debug=True
+    )

@@ -1,0 +1,52 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Environment and config files
+.env
+.env.local
+.env.development
+.env.production
+
+# Testing and coverage
+.nyc_output
+coverage
+.coverage
+.cache
+jest-coverage
+tests/
+
+# System files
+.DS_Store
+*.log
+Thumbs.db
+
+# Expo
+.expo
+.expo-shared
+dist
+
+# Development
+.vscode
+.idea
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Python cache (for backend)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
