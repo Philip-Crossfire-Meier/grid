@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -37,6 +37,14 @@ const EditableGrid = () => {
   const [showFormulas, setShowFormulas] = useState(false);
   const [originalFormulas, setOriginalFormulas] = useState({});
   const [cellErrors, setCellErrors] = useState({});
+
+  // Refs for synchronized horizontal scrolling
+  const headerScrollRef = useRef(null);
+  const dataScrollRef = useRef(null);
+  const dataContentScrollRef = useRef(null);
+  const isScrollingHeader = useRef(false);
+  const isScrollingData = useRef(false);
+  const isScrollingContent = useRef(false);
 
   const handleCellPress = (rowIndex, field, currentValue) => {
     setEditingCell({ rowIndex, field });
@@ -378,6 +386,60 @@ const evaluateFormulas = async () => {
     );
   };
 
+  // Calculate total content width for horizontal scrolling
+  const totalContentWidth = React.useMemo(() => {
+    return columns.reduce((total, column) => total + (column.width || 120), 0);
+  }, [columns]);
+
+  // Scroll synchronization functions
+  const handleHeaderScroll = (event) => {
+    const x = event.nativeEvent.contentOffset.x;
+    if (!isScrollingData.current && !isScrollingContent.current) {
+      isScrollingHeader.current = true;
+      if (dataScrollRef.current) {
+        dataScrollRef.current.scrollTo({ x, animated: false });
+      }
+      if (dataContentScrollRef.current) {
+        dataContentScrollRef.current.scrollTo({ x, animated: false });
+      }
+      setTimeout(() => {
+        isScrollingHeader.current = false;
+      }, 50);
+    }
+  };
+
+  const handleDataScroll = (event) => {
+    const x = event.nativeEvent.contentOffset.x;
+    if (!isScrollingHeader.current && !isScrollingContent.current) {
+      isScrollingData.current = true;
+      if (headerScrollRef.current) {
+        headerScrollRef.current.scrollTo({ x, animated: false });
+      }
+      if (dataContentScrollRef.current) {
+        dataContentScrollRef.current.scrollTo({ x, animated: false });
+      }
+      setTimeout(() => {
+        isScrollingData.current = false;
+      }, 50);
+    }
+  };
+
+  const handleDataContentScroll = (event) => {
+    const x = event.nativeEvent.contentOffset.x;
+    if (!isScrollingHeader.current && !isScrollingData.current) {
+      isScrollingContent.current = true;
+      if (headerScrollRef.current) {
+        headerScrollRef.current.scrollTo({ x, animated: false });
+      }
+      if (dataScrollRef.current) {
+        dataScrollRef.current.scrollTo({ x, animated: false });
+      }
+      setTimeout(() => {
+        isScrollingContent.current = false;
+      }, 50);
+    }
+  };
+
   const renderCell = (value, rowIndex, field, width = 120) => {
     const isEditing = editingCell && editingCell.rowIndex === rowIndex && editingCell.field === field;
     const cellKey = `${rowIndex}-${field}`;
@@ -552,24 +614,86 @@ const evaluateFormulas = async () => {
         </View>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.gridContainer}>
-          {renderHeader()}
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {data.map((row, rowIndex) => (
-              <View key={row.id} style={styles.dataRow}>
-                {columns.map((column) => (
-                  column.editable ? 
-                    renderCell(row[column.key] || '', rowIndex, column.key, column.width) :
-                    <View key={column.key} style={[styles.cell, { width: column.width }]}>
-                      <Text style={styles.cellText}>{row[column.key]}</Text>
-                    </View>
-                ))}
-              </View>
-            ))}
+      <View style={styles.gridWrapper}>
+        {/* Sticky Header */}
+        <View style={styles.stickyHeaderContainer}>
+          <ScrollView 
+            ref={headerScrollRef}
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalScrollContainer}
+            style={styles.headerScrollView}
+            bounces={false}
+            decelerationRate="fast"
+            indicatorStyle="default"
+            onScroll={handleHeaderScroll}
+            scrollEventThrottle={16}
+          >
+            {renderHeader()}
           </ScrollView>
         </View>
-      </ScrollView>
+
+        {/* Data Grid - Vertical Scroll Only */}
+        <View style={styles.dataContainer}>
+          <ScrollView 
+            showsVerticalScrollIndicator={true}
+            style={styles.verticalScrollView}
+            contentContainerStyle={styles.verticalScrollContainer}
+            bounces={false}
+            decelerationRate="fast"
+            indicatorStyle="default"
+          >
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScrollContainer}
+              style={styles.dataHorizontalScrollView}
+              bounces={false}
+              decelerationRate="fast"
+              indicatorStyle="default"
+              ref={(ref) => {
+                if (ref && !dataContentScrollRef.current) {
+                  dataContentScrollRef.current = ref;
+                }
+              }}
+              onScroll={handleDataContentScroll}
+              scrollEventThrottle={16}
+            >
+              <View style={[styles.horizontalScrollableContent, { width: totalContentWidth }]}>
+                {data.map((row, rowIndex) => (
+                  <View key={row.id} style={styles.dataRow}>
+                    {columns.map((column) => (
+                      column.editable ? 
+                        renderCell(row[column.key] || '', rowIndex, column.key, column.width) :
+                        <View key={column.key} style={[styles.cell, { width: column.width }]}>
+                          <Text style={styles.cellText}>{row[column.key]}</Text>
+                        </View>
+                    ))}
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          </ScrollView>
+        </View>
+
+        {/* Horizontal Scrollbar at Bottom - Always Visible */}
+        <View style={styles.horizontalScrollbarContainer}>
+          <ScrollView 
+            ref={dataScrollRef}
+            horizontal 
+            showsHorizontalScrollIndicator={true}
+            contentContainerStyle={styles.horizontalScrollContainer}
+            style={styles.bottomHorizontalScrollView}
+            bounces={false}
+            decelerationRate="fast"
+            indicatorStyle="default"
+            onScroll={handleDataScroll}
+            scrollEventThrottle={16}
+          >
+            <View style={[styles.horizontalScrollPlaceholder, { width: totalContentWidth }]} />
+          </ScrollView>
+        </View>
+      </View>
 
       {editingCell && (
         <View style={styles.editingOverlay}>

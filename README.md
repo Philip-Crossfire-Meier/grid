@@ -123,16 +123,6 @@ npm test -- --coverage
 
 ## 📊 Usage
 
-### Grid Operations
-
-- **Edit Cell**: Tap any cell to enter edit mode
-- **Formula Entry**: Start with `=` to enter formula mode
-- **Save Changes**: Press Enter to save and validate
-- **Cancel Edit**: Press Escape or tap outside to cancel
-- **Add Row**: Use the "Add Row" button in the header
-- **Add Column**: Use the "Add Column" button to expand the grid
-- **Header Editing**: Click column headers to rename (except ID column)
-
 ### Formula Support
 
 The grid supports Excel-like formulas:
@@ -146,7 +136,9 @@ The grid supports Excel-like formulas:
 
 ```
 =SUM(A1:A5)           # Sum of range A1 to A5
+=SUM(A1,B1,C1)        # Sum of individual cells (comma-separated)
 =AVERAGE(B1:B10)      # Average of range B1 to B10  
+=AVERAGE(A1,B1,C1)    # Average of individual cells (comma-separated)
 =A1+B1                # Add two cells
 =A1*1.2               # Multiply by constant
 =SUM(A1:A3)+B1        # Complex formula

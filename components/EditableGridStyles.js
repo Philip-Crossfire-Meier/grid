@@ -8,6 +8,81 @@ export const styles = StyleSheet.create({
     paddingTop: 20,
     alignItems: 'center',
   },
+  gridWrapper: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 1200, // Reasonable maximum width
+    maxHeight: 500, // Reasonable maximum height to ensure scrollbars
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    overflow: 'hidden',
+    marginHorizontal: 'auto', // Center the grid
+  },
+  stickyHeaderContainer: {
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 2,
+    borderBottomColor: '#e5e7eb',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 5,
+    zIndex: 2, // Ensure header stays on top
+  },
+  headerScrollView: {
+    flexGrow: 0,
+  },
+  dataContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  dataScrollView: {
+    flexGrow: 0,
+  },
+  verticalScrollView: {
+    flex: 1,
+    maxHeight: 400, // Ensure vertical scrolling appears when needed
+  },
+  verticalScrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 20, // Add padding at the bottom for better UX
+  },
+  outerVerticalScrollView: {
+    flex: 1,
+    maxHeight: 450, // Ensure vertical scrolling appears
+  },
+  outerVerticalScrollContainer: {
+    flexGrow: 1,
+  },
+  horizontalScrollView: {
+    borderRadius: 12,
+  },
+  horizontalScrollContainer: {
+    flexGrow: 1,
+  },
+  horizontalScrollableContent: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+  },
+  dataHorizontalScrollView: {
+    flex: 1,
+  },
+  horizontalScrollbarContainer: {
+    height: 20,
+    backgroundColor: '#f8f8f8',
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+  },
+  bottomHorizontalScrollView: {
+    height: 20,
+  },
+  horizontalScrollPlaceholder: {
+    height: 1,
+    backgroundColor: 'transparent',
+  },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -15,15 +90,10 @@ export const styles = StyleSheet.create({
     minWidth: '100%',
   },
   gridContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-    overflow: 'hidden',
-    padding: 20,
+    backgroundColor: 'transparent', // Remove background since wrapper has it
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    minWidth: '100%',
   },
   header: {
     flexDirection: 'row',
