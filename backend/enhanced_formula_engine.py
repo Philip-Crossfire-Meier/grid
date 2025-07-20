@@ -291,51 +291,121 @@ class EnhancedFormulaEngine:
             return '#ERROR!'
     
     # Copy helper methods from original formula_engine.py
-    def _calculate_sum(self, range_str: str, current_row: int, 
+    def _calculate_sum(self, args_str: str, current_row: int, 
                       data_context: List[Dict], columns_context: List[Dict]) -> Union[float, str]:
-        """Calculate SUM for a range like A1:A5"""
+        """Calculate SUM for ranges like A1:A5 or comma-separated values like A1,B1,C1"""
         try:
-            range_match = re.match(r'^([A-Z]+)(\d+):([A-Z]+)(\d+)$', range_str.strip())
-            if not range_match:
+            args_str = args_str.strip()
+            
+            # Check if it's a range (A1:A5 or A1:C1)
+            range_match = re.match(r'^([A-Z]+)(\d+):([A-Z]+)(\d+)$', args_str)
+            if range_match:
+                start_col, start_row, end_col, end_row = range_match.groups()
+                start_row_idx = int(start_row) - 1
+                end_row_idx = int(end_row) - 1
+                
+                total = 0
+                
+                # Convert column letters to indices
+                start_col_idx = ord(start_col) - ord('A')
+                end_col_idx = ord(end_col) - ord('A')
+                
+                # Iterate through all cells in the range
+                for row_idx in range(start_row_idx, min(end_row_idx + 1, len(data_context))):
+                    if row_idx >= 0:
+                        for col_idx in range(start_col_idx, end_col_idx + 1):
+                            col_letter = chr(ord('A') + col_idx)
+                            value = self._get_cell_value(col_letter, row_idx, data_context, columns_context)
+                            total += value
+                
+                return total
+            
+            # Handle comma-separated values (A1,B1,C1)
+            if ',' in args_str:
+                total = 0
+                cell_refs = [ref.strip() for ref in args_str.split(',')]
+                for cell_ref in cell_refs:
+                    cell_match = re.match(r'^([A-Z]+)(\d+)$', cell_ref)
+                    if cell_match:
+                        col_ref, row_ref = cell_match.groups()
+                        row_idx = int(row_ref) - 1
+                        value = self._get_cell_value(col_ref, row_idx, data_context, columns_context)
+                        total += value
+                    else:
+                        # Try to parse as a number
+                        try:
+                            total += float(cell_ref)
+                        except ValueError:
+                            logger.error(f"Invalid cell reference or number: {cell_ref}")
+                            return '#ERROR!'
+                
+                return total
+            
+            # Single cell reference
+            cell_match = re.match(r'^([A-Z]+)(\d+)$', args_str)
+            if cell_match:
+                col_ref, row_ref = cell_match.groups()
+                row_idx = int(row_ref) - 1
+                return self._get_cell_value(col_ref, row_idx, data_context, columns_context)
+            
+            # Try to parse as a number
+            try:
+                return float(args_str)
+            except ValueError:
+                logger.error(f"Invalid SUM argument: {args_str}")
                 return '#ERROR!'
-            
-            start_col, start_row, end_col, end_row = range_match.groups()
-            start_row_idx = int(start_row) - 1
-            end_row_idx = int(end_row) - 1
-            
-            # Find the column
-            column = self._find_column_by_title(start_col, columns_context)
-            if not column:
-                return '#ERROR!'
-            
-            total = 0
-            for i in range(start_row_idx, min(end_row_idx + 1, len(data_context))):
-                if i >= 0:
-                    value = self._get_numeric_value(data_context[i].get(column['key'], 0))
-                    total += value
-            
-            return total
             
         except Exception as e:
             logger.error(f"Error in _calculate_sum: {str(e)}")
             return '#ERROR!'
     
-    def _calculate_average(self, range_str: str, current_row: int,
+    def _calculate_average(self, args_str: str, current_row: int,
                           data_context: List[Dict], columns_context: List[Dict]) -> Union[float, str]:
-        """Calculate AVERAGE for a range like A1:A5"""
+        """Calculate AVERAGE for ranges like A1:A5 or comma-separated values like A1,B1,C1"""
         try:
-            sum_result = self._calculate_sum(range_str, current_row, data_context, columns_context)
-            if isinstance(sum_result, str):  # Error occurred
-                return sum_result
+            args_str = args_str.strip()
             
-            range_match = re.match(r'^([A-Z]+)(\d+):([A-Z]+)(\d+)$', range_str.strip())
-            if not range_match:
+            # Check if it's a range (A1:A5 or A1:C1)
+            range_match = re.match(r'^([A-Z]+)(\d+):([A-Z]+)(\d+)$', args_str)
+            if range_match:
+                sum_result = self._calculate_sum(args_str, current_row, data_context, columns_context)
+                if isinstance(sum_result, str):  # Error occurred
+                    return sum_result
+                
+                start_col, start_row, end_col, end_row = range_match.groups()
+                # Calculate the number of cells in the range
+                start_col_idx = ord(start_col) - ord('A')
+                end_col_idx = ord(end_col) - ord('A')
+                start_row_idx = int(start_row)
+                end_row_idx = int(end_row)
+                
+                num_cols = end_col_idx - start_col_idx + 1
+                num_rows = end_row_idx - start_row_idx + 1
+                count = num_cols * num_rows
+                
+                return sum_result / count if count > 0 else '#DIV/0!'
+            
+            # Handle comma-separated values (A1,B1,C1)
+            if ',' in args_str:
+                sum_result = self._calculate_sum(args_str, current_row, data_context, columns_context)
+                if isinstance(sum_result, str):  # Error occurred
+                    return sum_result
+                
+                cell_refs = [ref.strip() for ref in args_str.split(',')]
+                count = len(cell_refs)
+                return sum_result / count if count > 0 else '#DIV/0!'
+            
+            # Single cell reference
+            cell_match = re.match(r'^([A-Z]+)(\d+)$', args_str)
+            if cell_match:
+                return self._calculate_sum(args_str, current_row, data_context, columns_context)
+            
+            # Try to parse as a number
+            try:
+                return float(args_str)
+            except ValueError:
+                logger.error(f"Invalid AVERAGE argument: {args_str}")
                 return '#ERROR!'
-            
-            start_col, start_row, end_col, end_row = range_match.groups()
-            count = int(end_row) - int(start_row) + 1
-            
-            return sum_result / count if count > 0 else '#DIV/0!'
             
         except Exception as e:
             logger.error(f"Error in _calculate_average: {str(e)}")

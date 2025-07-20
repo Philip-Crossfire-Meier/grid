@@ -1,18 +1,27 @@
 # React Native Editable Grid App
 
-A React Native application built with Expo featuring an advanced editable data grid with formula support, comprehensive testing, and Docker containerization. Perfect for medical data management and spreadsheet-like functionality.
+A React Native application built with Expo featuring an editable data grid with formula support.
 
-## ✨ Features
+Quick start:
+  ```bash
+   docker compose up --build
+   ```
 
-- **Advanced Editable Grid**: Tap any cell to edit with formula support and validation
-- **Formula Engine**: Excel-like formulas with SUM, AVERAGE, and cell references
-- **Python Backend**: Flask-based formula evaluation server with dependency tracking
-- **Comprehensive Testing**: 77+ tests with 100% pass rate using Jest and Testing Library
-- **Add/Delete Rows & Columns**: Dynamic grid management with user confirmation  
-- **Header Editing**: Customizable column headers (except ID column)
-- **Formula Mode**: Visual feedback for formula cells with syntax highlighting
-- **Docker Support**: Complete containerization for both frontend and backend
-- **Real-time Updates**: Immediate visual feedback for all data changes
+The frontend will then be available at [localhost:8000](http://localhost:8081/). Make sure the ports 8081 and 8000 are not in use.
+
+Approach:
+
+- The code uses React for the frontend and Python for the backend.
+- The backend evaluates formulas using a custom graph which runs a topological sort.
+- Cyclical references are indicated to the user.
+- Communication between frontend and backend is facilitated via REST
+
+Notes and assumptions:
+
+- This is a mockup and not a refined solution (indicated by the 2 hour time limit).
+- This is a programming excercise. In real-world product development I would have suggested to look into off-the-shelf solutions first, for example AG Grid, Airtable, MUI, etc.
+- Since Frontera uses React and Python the purpose of the excercise is to test familiarity with these technologies. Again, in real-world product development using for example streamlit might be an option which would greatly reduce overall complexity and LOC.
+- The code is not optimized for security (e.g. no input checking, no authentication or authorization). 
 
 ## 🏗️ Project Structure
 
@@ -71,7 +80,7 @@ React-Grid/
    npx expo start
    ```
 
-### Docker Development (Recommended)
+### Docker Development 
 
 1. **Build and run the full stack:**
    ```bash
@@ -142,150 +151,6 @@ The grid supports Excel-like formulas:
 =A1*1.2               # Multiply by constant
 =SUM(A1:A3)+B1        # Complex formula
 ```
-
-### Data Structure
-
-The grid displays medical session data with customizable fields:
-- **ID**: Auto-generated unique identifier (read-only)
-- **Session Hours**: Patient session duration (editable, supports formulas)
-- **Rate per Hour**: Hourly rate (editable, supports formulas)
-- **Margin**: Profit margin calculation (editable, supports formulas)
-- **Total Cost**: Calculated total (editable, supports formulas)
-
-## 🐳 Docker Configuration
-
-### Frontend Dockerfile
-- Based on Node.js 20 Alpine for security and performance
-- Exposes ports 8081, 19000-19002 for Expo development server
-- Includes Expo CLI and all project dependencies
-- Optimized for development with hot reloading
-
-### Backend Dockerfile  
-- Python 3.12 slim image for formula engine
-- Flask server with CORS support
-- Advanced formula parsing and evaluation
-- Dependency tracking and circular reference detection
-
-### docker-compose.yml
-- Multi-container orchestration for full-stack development
-- Frontend and backend service coordination
-- Volume mounting for live code changes
-- Network configuration for service communication
-- Environment variables for cross-container access
-
-## 🧪 Testing Architecture
-
-### Test Coverage
-- **77 tests** with **100% pass rate**
-- **Component Tests**: EditableGrid functionality and behavior
-- **Integration Tests**: Full user workflow testing
-- **Unit Tests**: Individual component and utility testing
-- **Formula Tests**: Comprehensive formula engine validation
-
-### Test Structure
-```
-tests/
-├── components/
-│   ├── EditableGrid.test.js         # Main grid component tests
-│   ├── EditableGrid.integration.test.js # User workflow tests
-│   ├── App.test.js                  # Application-level tests
-│   └── FormulaEngineClient.test.js  # API client tests
-├── utils/
-│   ├── formulaValidation.test.js    # Formula validation tests
-│   └── testHelpers.js               # Shared test utilities
-└── setup/
-    └── testSetup.js                 # Jest configuration
-```
-
-### Test Utilities
-- **Helper Functions**: `getFirstEditableCell()`, `enterEditMode()`
-- **Mock Services**: FormulaEngineClient mocking
-- **Async Testing**: Comprehensive `waitFor()` patterns
-- **User Interaction**: Realistic user event simulation
-
-## 💻 Technologies Used
-
-### Frontend
-- **React Native**: Cross-platform mobile app framework
-- **Expo**: Development platform and toolchain
-- **React Hooks**: Modern state management (useState, useEffect)
-- **Testing Library**: Component testing with user interaction simulation
-- **Jest**: Test runner with comprehensive assertion library
-
-### Backend  
-- **Python 3.12**: Modern Python with type hints
-- **Flask**: Lightweight web framework with CORS support
-- **Formula Engine**: Custom parser with dependency tracking
-- **Regex Parsing**: Advanced formula syntax validation
-
-### DevOps & Tooling
-- **Docker**: Multi-container development environment
-- **Docker Compose**: Full-stack orchestration
-- **GitHub Copilot**: AI-assisted development with custom instructions
-- **ESLint/Prettier**: Code formatting and linting
-
-### Testing Framework
-- **Jest**: Test runner and assertion library
-- **React Native Testing Library**: Component testing utilities
-- **Mock Functions**: Service and API mocking
-- **Async Testing**: Promise-based test patterns
-
-## 🏗️ Architecture
-
-### Frontend Architecture
-```
-App.js
-└── EditableGrid.js (Main Grid Component)
-    ├── EditableGridStyles.js (Styling)
-    ├── FormulaEngine.js (Client Logic)
-    └── FormulaEngineClient.js (API Communication)
-```
-
-### Backend Architecture  
-```
-Flask App (app.py)
-├── Enhanced Formula Engine (formula evaluation)
-├── Dependency Graph (circular reference detection)
-├── Formula Parser (syntax validation)
-└── CORS Handler (cross-origin requests)
-```
-
-### Data Flow
-1. **User Input** → Grid cell edit mode
-2. **Formula Detection** → Client-side validation  
-3. **API Request** → Backend formula evaluation
-4. **Dependency Check** → Circular reference detection
-5. **Result Return** → Grid cell update
-6. **State Update** → UI re-render
-
-## 🤝 Contributing
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make your changes** with comprehensive tests
-4. **Run the test suite**: `npm test` (ensure all 77 tests pass)
-5. **Test manually** with Expo Go app
-6. **Submit a pull request** with detailed description
-
-### Development Guidelines
-- Use React Native best practices and functional components
-- Maintain responsive design for various screen sizes  
-- Follow Expo development patterns and conventions
-- Write tests for new features using Testing Library patterns
-- Use helper functions from `testHelpers.js` for consistency
-- Implement proper error handling and user feedback
-- Follow the established formula syntax patterns
-
-### Code Style
-- Use functional components with React hooks
-- Implement proper TypeScript-style prop validation
-- Follow the established file structure and naming conventions
-- Write descriptive test names and comprehensive assertions
-- Use the established mock patterns for external services
-
-## 📜 License
-
-This project is open source and available under the [MIT License](LICENSE).
 
 ## 🔧 Troubleshooting
 
