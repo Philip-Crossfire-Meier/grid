@@ -7,7 +7,7 @@ Quick start:
    docker compose up --build
    ```
 
-The frontend will then be available at [localhost:8000](http://localhost:8081/). Make sure the ports 8081 and 8000 are not in use.
+The frontend will then be available at [localhost:8081](http://localhost:8081/). Make sure the ports 8081 and 8000 (the backend port) are not in use. Make sure the docker daemon is running before composing.
 
 Approach:
 
@@ -19,9 +19,9 @@ Approach:
 Notes and assumptions:
 
 - This is a mockup and not a refined solution (indicated by the 2 hour time limit).
-- This is a programming excercise. In real-world product development I would have suggested to look into off-the-shelf solutions first, for example AG Grid, Airtable, MUI, etc.
+- This is a programming excercise. In real-world product development I would have suggested to look into off-the-shelf solutions first, for example AG Grid, Airtable, MUI, etc. 
 - Since Frontera uses React and Python the purpose of the excercise is to test familiarity with these technologies. Again, in real-world product development using for example streamlit might be an option which would greatly reduce overall complexity and LOC.
-- The code is not optimized for security (e.g. no input checking, no authentication or authorization). 
+- The code is not optimized for security (e.g. no input checking, no authentication or authorization, no supply chain auditing). 
 
 ## 🏗️ Project Structure
 
